@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo App</title>
+    <link rel="icon" type="image/png" href="../images/favicon.png" />
+    <style>
+      :root {
+        --background: #101114;
+        --primary-color: #1c1d20;
+        --secondary-color: #4a4d57;
+        --accent-color: #00ffc4;
+        --text-color: #f9f9f9;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 16pt;
+        color: var(--text-color);
+      }
+      body {
+        min-height: 100vh;
+        padding: 10px;
+        background-color: var(--background);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      /* Navigation Bar Styles */
+      .navbar {
+        width: 100%;
+        background-color: var(--primary-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        box-sizing: border-box;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+      }
+
+      .navbar .logo {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--accent-color);
+      }
+
+      .navbar .nav-links {
+        display: flex;
+        gap: 20px;
+      }
+
+      .navbar .nav-links a {
+        color: var(--text-color);
+        text-decoration: none;
+        font-size: 1rem;
+        transition: color 0.3s;
+      }
+
+      .navbar .nav-links a:hover {
+        color: var(--accent-color);
+      }
+
+      h1 {
+        margin-top: 100px;
+        margin-bottom: 20px;
+        font-size: 3rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        text-align: center;
+        color: var(--accent-color);
+      }
+      .wrapper {
+        width: 700px;
+        max-width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      #todo-input {
+        box-sizing: border-box;
+        padding: 12px 20px;
+        width: 100%;
+        background: none;
+        border: 2px solid var(--secondary-color);
+        border-radius: 1000px;
+        font: inherit;
+        color: var(--text-color);
+        caret-color: var(--accent-color);
+      }
+      #todo-input:focus {
+        outline: none;
+      }
+      form {
+        position: relative;
+      }
+      #add-button {
+        position: absolute;
+        top: 0;
+        right: 0;
+
+        background-color: var(--accent-color);
+        height: 100%;
+        padding: 0 30px;
+        border: none;
+        border-radius: 1000px;
+        font: inherit;
+        font-weight: 600;
+        color: var(--background);
+        cursor: pointer;
+      }
+      .todo {
+        margin-bottom: 10px;
+        padding: 0 16px;
+        background-color: var(--primary-color);
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+      }
+      .todo .todo-text {
+        padding: 15px;
+        padding-right: 0;
+        flex-grow: 1;
+        transition: 200ms ease;
+      }
+      .delete-button {
+        padding: 3px;
+        background: none;
+        border: none;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+      }
+      .delete-button svg {
+        transition: 200ms ease;
+      }
+      .delete-button:hover svg {
+        fill: #ff0033;
+      }
+      .custom-checkbox {
+        border: 2px solid var(--accent-color);
+        border-radius: 50%;
+        min-height: 20px;
+        min-width: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-shrink: 0;
+        transition: 200ms ease;
+        cursor: pointer;
+      }
+      input[type="checkbox"]:checked ~ .custom-checkbox {
+        background-color: var(--accent-color);
+      }
+      input[type="checkbox"]:checked ~ .custom-checkbox svg {
+        fill: var(--primary-color);
+      }
+      input[type="checkbox"]:checked ~ .todo-text {
+        text-decoration: line-through;
+        color: var(--secondary-color);
+      }
+      input[type="checkbox"] {
+        display: none;
+      }
+      @media (max-width: 500px) {
+        html {
+          font-size: 12pt;
+        }
+        #add-button {
+          position: unset;
+          width: 100%;
+          margin-top: 10px;
+          padding: 15px;
+          height: auto;
+        }
+        h1 {
+          margin-top: 100px;
+          font-size: 15vw;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation Bar -->
+    <div class="navbar">
+      <div class="logo">Todo Apps</div>
+      <div class="nav-links">
+        <a href="index.html">Simple Todo App</a>
+        <a href="spin_wheel.html">Spin Wheel Todo</a>
+      </div>
+    </div>
+
+    <h1>Todo App</h1>
+    <div class="wrapper">
+      <form>
+        <input
+          id="todo-input"
+          type="text"
+          placeholder="Write anything and hit enter to add"
+          autocomplete="off"
+        />
+        <button id="add-button">ADD</button>
+      </form>
+      <ul id="todo-list">
+        <!-- Todo items will be inserted here -->
+      </ul>
+    </div>
+    <script>
+      const todoForm = document.querySelector("form");
+      const todoInput = document.getElementById("todo-input");
+      const todoListUL = document.getElementById("todo-list");
+
+      let allTodos = getTodos();
+      updateTodoList();
+
+      todoForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        addTodo();
+      });
+
+      function addTodo() {
+        const todoText = todoInput.value.trim();
+        if (todoText.length > 0) {
+          const todoObject = {
+            text: todoText,
+            completed: false,
+          };
+          allTodos.push(todoObject);
+          updateTodoList();
+          saveTodos();
+          todoInput.value = "";
+        }
+      }
+
+      function updateTodoList() {
+        todoListUL.innerHTML = "";
+        allTodos.forEach((todo, todoIndex) => {
+          todoItem = createTodoItem(todo, todoIndex);
+          todoListUL.append(todoItem);
+        });
+      }
+
+      function createTodoItem(todo, todoIndex) {
+        const todoId = "todo-" + todoIndex;
+        const todoLI = document.createElement("li");
+        const todoText = todo.text;
+        todoLI.className = "todo";
+        todoLI.innerHTML = `
+                <input type="checkbox" id="${todoId}">
+                <label class="custom-checkbox" for="${todoId}">
+                    <svg fill="transparent" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>
+                </label>
+                <label for="${todoId}" class="todo-text">
+                    ${todoText}
+                </label>
+                <button class="delete-button">
+                    <svg fill="var(--secondary-color)" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>
+                </button>
+            `;
+        const deleteButton = todoLI.querySelector(".delete-button");
+        deleteButton.addEventListener("click", () => {
+          deleteTodoItem(todoIndex);
+        });
+        const checkbox = todoLI.querySelector("input");
+        checkbox.addEventListener("change", () => {
+          allTodos[todoIndex].completed = checkbox.checked;
+          saveTodos();
+        });
+        checkbox.checked = todo.completed;
+
+        return todoLI;
+      }
+
+      function deleteTodoItem(todoIndex) {
+        allTodos.splice(todoIndex, 1);
+        updateTodoList();
+        saveTodos();
+      }
+
+      function getTodos() {
+        return JSON.parse(localStorage.getItem("todos") || "[]");
+      }
+
+      function saveTodos() {
+        localStorage.setItem("todos", JSON.stringify(allTodos));
+      }
+    </script>
+  </body>
+</html>
